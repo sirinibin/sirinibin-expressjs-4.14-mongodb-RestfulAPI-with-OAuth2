@@ -17,7 +17,6 @@ router.post('/', accesstoken.validate, function (req, res, next) {
         return accesstoken.sendErrorResponse(errors, req, res);
     }
 
-    console.log("cool1");
     return accesstoken.generateAccessToken(req, res);
 
 

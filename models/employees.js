@@ -2,6 +2,50 @@ const { check }  = require('express-validator/check');
 var bcrypt=require('bcrypt');
 
 var employees={};
+employees.schema =new mongoose.Schema({
+    name: String,
+    email: String,
+    created_at: { type: Date, default: Date.now },
+    updated_at: { type: Date, default: Date.now }
+});
+employees.schema.methods.findbyEmail = function(cb,fields={},id) {
+    console.log("Inside findbyEmail:"+this.email);
+    if(id){
+        return this.model('Employee').findOne({ email: this.email,_id:{'$ne':id} }, cb).select(fields);
+    }else {
+        return this.model('Employee').findOne({ email: this.email }, cb).select(fields);
+    }
+
+};
+employees.schema.methods.findbyId = function(cb,fields={}) {
+    console.log("Inside findbyId:"+this.id);
+    return this.model('Employee').findOne({ _id: this.id }, cb).select(fields);
+};
+employees.schema.methods.findAll = function(cb,fields={},offset=0,limit=10,order={},search={}) {
+    console.log("Inside findAll:");
+    return this.model('Employee').find(search, cb).select(fields).skip(offset).limit(limit).sort(order);
+};
+employees.schema.set('toJSON', {
+    transform: function (doc, ret, options) {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v;
+    }
+});
+employees.schema.methods.count = function(cb,search={}) {
+    console.log("Inside Count:");
+    return this.model('Employee').count(search, cb);
+};
+employees.schema.methods.update = function(cb,data={}) {
+    console.log("Inside update:"+this.id);
+    return this.model('Employee').updateOne({ _id: this.id },{$set: data},{upsert: true}, cb);
+};
+employees.schema.methods.delete = function(cb,data={}) {
+    console.log("Inside Delete:"+this.id);
+    return this.model('Employee').remove({ _id: this.id }, cb);
+};
+
+
 employees.validate = [
     check('email').isEmail().withMessage('Must be a Valid E-mail'),
 
@@ -30,49 +74,33 @@ check('email').custom((value, { req }) => {
 }).withMessage('E-mail is required'),
 
 
-
 check('email').custom((value, { req }) => {
+
 
 
     return new Promise(function(resolve, reject){
 
-        let query='SELECT email FROM employees WHERE email = ?';
+        var Employee = mongoose.model("Employee", employees.schema);
+        EmployeeModel = new Employee({"email":value});
 
-        params=[req.body.email];
+        EmployeeModel.findbyEmail(function(err, result){
+            console.log(result);
 
-        if(req.params.id){
-            query='SELECT email FROM employees WHERE email = ? AND id!=?';
-            params=[req.body.email,req.params.id];
+            if (result&&value==result.email) {
+                reject(false);
 
-        }
-
-
-        connection.query(query
-            , params, function(error, results, fields) {
-
-                if (error) {
-                    console.log("ERRORS:");
-                    console.log(error);
-                    //reject(false);
-                    throw error;
-                    //return  res.end(JSON.stringify(error,null, 3));
-                }
-
-
-                if (results&&results.length > 0&&value==results[0].email) {
-                    // console.log(results[0].email);
-                    reject(false);
-
-                }else {
-                    resolve(true);
-                }
-
+            }else {
+                console.log("TRUE");
+                resolve(true);
             }
-        );
+
+
+        },{ "_id":1,"email":2},req.params.id);
 
     });
 
 }).withMessage('E-mail already in use'),
+
 
 
 ];
@@ -106,34 +134,42 @@ employees.parseAttributes=function(req){
 employees.create=function(req,res) {
 
 
+
     //Perform Insertion
     params=employees.parseAttributes(req);
-    query='INSERT INTO employees SET created_at = now(),updated_at = now(), ?';
+
+    var Employee = mongoose.model("Employee", employees.schema);
+
+    var EmployeeModel = new Employee(params);
+
+    EmployeeModel.save().then(item => {
+                            console.log("Saved");
+
+                        console.log(item);
+
+                        EmployeeModel = new Employee({"_id":item.id});
+
+                        EmployeeModel.findbyId(function(err, result){
+
+                            let response={
+                                'status':1,
+                                'data':result
+                            };
+
+                            return res.end(JSON.stringify(response,null, 3));
+
+                        },{ "_id":1, "name":2,"email":3,"created_at":4,"updated_at":5});
 
 
-    connection.query(query,params, function (error, results, fields) {
-        if (error) {
-            return  res.end(JSON.stringify(error,null, 3));
-        }
-        console.log(results);
+                    })
+                    .catch(err => {
 
-        connection.query('SELECT * from employees where id=?',results.insertId, function (error, results, fields) {
-            if (error) {
-                return  res.end(JSON.stringify(error,null, 3));
-            }
 
-            let response={
-                'status':1,
-                'data':{}
-            };
+                        console.log("Not Saved");
+                    console.log(err);
+                    return  res.status(400).end(JSON.stringify(err,null, 3));
 
-            response['data']=results[0];
-
-            return res.end(JSON.stringify(response,null, 3));
-
-        });
-
-    });
+                    });
 
 
 }
@@ -141,20 +177,15 @@ employees.create=function(req,res) {
 employees.update=function(req,res) {
 
     if(req.params.id){
-
-        query1='SELECT id FROM employees WHERE id=?';
-        params1=[req.params.id];
-
-        connection.query(query1,params1, function (error, results, fields) {
-            if (error) {
-                return  res.end(JSON.stringify(error,null, 3));
-            }
-            console.log(results);
-
-            console.log(query1);
+        params2=employees.parseAttributes(req);
 
 
-            if (results&&results.length==0) {
+        var Employee = mongoose.model("Employee", employees.schema);
+        EmployeeModel = new Employee({"_id":req.params.id});
+
+        EmployeeModel.findbyId(function(err, result){
+
+            if (!result) {
 
                 let response={
                     'status':0,
@@ -168,42 +199,36 @@ employees.update=function(req,res) {
             }
 
 
+            EmployeeModel.update(function(err, result){
 
-            //Perform Insertion/Updation
-            params2=employees.parseAttributes(req);
-
-                query2='UPDATE employees SET updated_at = now(), name=?,email=? WHERE id=?';
-                params2=[params2.name,params2.email,req.params.id];
+                console.log(result);
 
 
 
-            connection.query(query2,params2, function (error, results, fields) {
-                if (error) {
-                    return  res.end(JSON.stringify(error,null, 3));
-                }
-                console.log(results);
+                EmployeeModel = new Employee({"_id":req.params.id});
+
+                EmployeeModel.findbyId(function(err, result) {
+
+                     if (result) {
 
 
-                connection.query('SELECT * from employees where id=?',req.params.id, function (error, results, fields) {
-                    if (error) {
-                        return  res.end(JSON.stringify(error,null, 3));
+                        let response={
+                            'status':1,
+                            'data':result
+                        };
+                        return res.end(JSON.stringify(response,null, 3));
+
+
+
                     }
-
-                    let response={
-                        'status':1,
-                        'data':{}
-                    };
-
-                    response['data']=results[0];
-
-                    return res.end(JSON.stringify(response,null, 3));
 
                 });
 
-            });
 
+            },params2);
 
-        });
+        },{ "_id":1});
+
     }
 
 
@@ -217,82 +242,15 @@ employees.update=function(req,res) {
 employees.delete=function(req,res) {
 
 
-        query='SELECT id FROM employees WHERE id=?';
-        params=[req.params.id];
-
-       connection.query(query,params, function (error, results, fields) {
-        if (error) {
-            return  res.end(JSON.stringify(error,null, 3));
-        }
-        console.log(results);
-
-
-           if (results&&results.length ==0) {
-
-               let response={
-                   'status':0,
-                   'errors':{
-                       'id':['Invalid Record']
-                   }
-               };
-
-
-               return res.status(400).end(JSON.stringify(response,null, 3));
-           }
-
-
-           //Perform Deletion
-
-           query='DELETE FROM employees WHERE id=?';
-           params=[req.params.id];
-
-           connection.query(query,params, function (error, results, fields) {
-               if (error) {
-                   return  res.end(JSON.stringify(error,null, 3));
-               }
-               console.log(results);
-
-               let response={
-                   'status':1,
-                   'message':'Deleted Successfully',
-                   'data':{
-                       'id':req.params.id
-                   }
-               };
-
-
-               return res.end(JSON.stringify(response,null, 3));
-
-           });
-
-       });
-
-
-
-
-
-
-
-
-
-}
-employees.find=function(req,res,id) {
 
     if(req.params.id){
 
-        query1='SELECT id FROM employees WHERE id=?';
-        params1=[id];
+        var Employee = mongoose.model("Employee", employees.schema);
+        EmployeeModel = new Employee({"_id":req.params.id});
 
-        connection.query(query1,params1, function (error, results, fields) {
-            if (error) {
-                return  res.end(JSON.stringify(error,null, 3));
-            }
-            console.log(results);
+        EmployeeModel.findbyId(function(err, result){
 
-            console.log(query1);
-
-
-            if (results&&results.length==0) {
+            if (!result) {
 
                 let response={
                     'status':0,
@@ -306,26 +264,67 @@ employees.find=function(req,res,id) {
             }
 
 
-                connection.query('SELECT * from employees where id=?',id, function (error, results, fields) {
-                    if (error) {
-                        return  res.end(JSON.stringify(error,null, 3));
+            EmployeeModel.delete(function(err, result){
+
+                console.log(result);
+                    if (result) {
+
+
+                        let response={
+                            'status':1,
+                            'message':'Deleted Successfully',
+                            'data':{
+                                'id':req.params.id
+                            }
+                        };
+
+                        return res.end(JSON.stringify(response,null, 3));
+
+
                     }
 
-                    let response={
-                        'status':1,
-                        'data':{}
-                    };
 
-                    response['data']=results[0];
 
-                    return res.end(JSON.stringify(response,null, 3));
-
-                });
 
             });
 
+        },{ "_id":1});
+
     }
 
+
+
+}
+employees.find=function(req,res,id) {
+
+        var Employee = mongoose.model("Employee", employees.schema);
+        EmployeeModel = new Employee({"_id":req.params.id});
+
+        EmployeeModel.findbyId(function(err, result){
+
+            if (!result) {
+
+                let response={
+                    'status':0,
+                    'errors':{
+                        'id':['Invalid Record']
+                    }
+                };
+
+
+                return res.status(400).end(JSON.stringify(response,null, 3));
+            }
+
+            let response={
+                'status':1,
+                'data':result
+            };
+
+            return res.end(JSON.stringify(response,null, 3));
+
+
+
+        });
 }
 employees.findAll=function(req,res) {
 
@@ -348,72 +347,93 @@ employees.findAll=function(req,res) {
     params.push(limit);
 
     search_params={};
+    search={};
     if(req.query.search){
         search_params=req.query.search;
-        search_params_count=0;
-        search_condition='WHERE';
 
         if(req.query.search.name){
-            search_condition+=' name like "'+req.query.search.name+'%" ';
-            search_params_count++;
+            search['name']={ "$regex": req.query.search.name, "$options": "i" };
         }
 
         if(req.query.search.email){
-            if( search_params_count>0) {
-                search_condition+=' AND';
-            }
-            search_condition+=' email like "'+req.query.search.email+'%" ';
-            search_params_count++;
-        }
 
-        if( search_params_count==0){
-            search_condition='';
+            search['email']={ "$regex": req.query.search.email, "$options": "i" };
         }
+    }
+    //console.log(search);
+
+    order={};
+
+    sort_string=req.query.sort;
+    sort_string=sort_string.split(",");
+
+
+    for(i=0;i< sort_string.length;i++){
+
+            if(sort_string[i].match("desc")){
+                str=sort_string[i].replace("desc","").trim();
+                order[str]=-1;
+            }else {
+                str=sort_string[i].replace("asc","").trim();
+                order[str]=1;
+            }
 
     }
-    sort_string="";
-    if(req.query.sort){
-        sort_string=req.query.sort;
-        if(req.query.sort){
-            sort_string=' ORDER BY '+req.query.sort+' ';
-        }
 
 
-    }
+
+    //console.log(order);
 
 
-    connection.query('SELECT * from employees '+search_condition+'  '+sort_string+' limit ?,?',params, function (error, results1, fields) {
-        if (error) {
-            return  res.end(JSON.stringify(error,null, 3));
-        }
-        console.log(results1);
 
+    var Employee = mongoose.model("Employee", employees.schema);
+    EmployeeModel = new Employee();
 
-        connection.query('SELECT count(*) from employees',[], function (error, results2, fields) {
-            if (error) {
-                return  res.end(JSON.stringify(error,null, 3));
-            }
+    EmployeeModel.findAll(function(err, result){
+
+       // console.log(result);
+
+        if (!result) {
 
             let response={
-                'status':1,
-                'page':page,
-                'size':limit,
-                'totalCount':results2[0]['count(*)'],
-                'search_params':search_params,
-                'sort_by':sort_string,
-                'data':{},
+                'status':0,
+                'errors':{
+                    'id':['Invalid Record']
+                }
             };
 
-            response['data']=results1;
 
-            return res.end(JSON.stringify(response,null, 3));
-
-        });
+            return res.status(400).end(JSON.stringify(response,null, 3));
+        }
 
 
+        EmployeeModel.count(function(err, count) {
+
+            console.log("Count:");
+            console.log(count);
+
+                let response = {
+                    'status': 1,
+                    'page': page,
+                    'size': limit,
+                    'totalCount': count,
+                    'search_params': search_params,
+                    'sort_by': order,
+                    'data': {},
+                };
+
+                response['data'] = result;
+                return res.end(JSON.stringify(response, null, 3));
+
+        },search);
 
 
-    });
+
+
+
+
+    },{},offset,limit,order,search);
+
 
 
 }

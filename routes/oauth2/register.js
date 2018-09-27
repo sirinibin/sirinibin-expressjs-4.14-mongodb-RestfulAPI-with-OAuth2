@@ -1,6 +1,7 @@
 var express = require('express');
 const { validationResult }   = require('express-validator/check');
 var router = express.Router();
+var mongoose = require('mongoose');
 
 var user = require('./../../models/user');
 
@@ -15,6 +16,7 @@ router.post('/', user.validate, function (req, res, next) {
 
         return user.sendErrorResponse(errors, req, res);
     }
+
 
     return user.create(req, res);
 

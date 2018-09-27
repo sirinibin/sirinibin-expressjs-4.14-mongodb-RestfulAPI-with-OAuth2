@@ -8,7 +8,26 @@ var bodyParser = require('body-parser');
 
 
 var mysql = require('mysql');
+//var mongoose = require('mongoose');
+global.mongoose = require('mongoose');
 var db = require('./config/db');
+
+// db instance connection
+//var db=require("./config/db");
+
+//var db = require('./config/db');
+//var mongoose = require('mongoose');
+// Connecting to the database
+
+//var mongoose = require("mongoose");
+
+/*
+mongoose.Promise = global.Promise;
+mongoose.connect(db.url);
+*/
+
+
+
 
 
 var index = require('./routes/index');
@@ -47,11 +66,33 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
+
+
+
+mongoose.connect(db.url, {
+  useNewUrlParser: true
+}).then(() => {
+  console.log("Successfully connected to the database");
+}).catch(err => {
+  console.log('Could not connect to the database. Exiting now...', err);
+  process.exit();
+});
+
+
+
 app.use(function(req, res, next){
-  global.connection = mysql.createConnection(db.info);
-  global.connection.connect();
+
+
+   global.connection = mongoose.connection;
+
+
+ // global.connection = mysql.createConnection(db.info);
+ // global.connection.connect();
+
   next();
 });
+
+
 
 
 app.use('/', index);

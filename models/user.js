@@ -1,7 +1,27 @@
 const { check }  = require('express-validator/check');
+
 var bcrypt=require('bcrypt');
 
+
+
 var user={};
+user.schema =new mongoose.Schema({
+    name: String,
+    username: String,
+    email: String,
+    password: String,
+    created_at: { type: Date, default: Date.now },
+    updated_at: { type: Date, default: Date.now }
+});
+
+user.schema.set('toJSON', {
+    transform: function (doc, ret, options) {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v;
+        delete ret.password;
+    }
+});
 
 user.validate = [
     check('email').isEmail().withMessage('Must be a Valid E-mail'),
@@ -57,19 +77,21 @@ return new Promise(function(resolve, reject){
     value=value.trim();
     //console.log("Username:"+value);
 
-    connection.query('SELECT username FROM users WHERE username = ?'
-        , [value], function(error, results, fields) {
+    var User = mongoose.model("User", user.schema);
+    model = new User({"username":value});
 
-            if (results&&results.length > 0&&value==results[0].username) {
-                //console.log("U:"+results[0].username);
-                reject(false);
+    model.findbyUsername(function(err, user){
+        console.log(user);
 
-            }else {
-                resolve(true);
-            }
+        if (user&&value==user.username) {
+            reject(false);
 
+        }else {
+            resolve(true);
         }
-    );
+
+
+    },{ "_id":1,"username":2});
 
 });
 
@@ -78,25 +100,25 @@ return new Promise(function(resolve, reject){
 }).withMessage('Username already in use'),
 
 
-
 check('email').custom((value, { req }) => {
 
     return new Promise(function(resolve, reject){
 
-        connection.query('SELECT email FROM users WHERE email = ?'
-            , [req.body.email], function(error, results, fields) {
+        var User = mongoose.model("User", user.schema);
+        model = new User({"email":value});
 
-                console.log(results);
-                if (results&&results.length > 0&&value==results[0].email) {
-                    // console.log(results[0].email);
-                    reject(false);
+        model.findbyEmail(function(err, user){
+            console.log(user);
 
-                }else {
-                    resolve(true);
-                }
+            if (user&&value==user.email) {
+                reject(false);
 
+            }else {
+                resolve(true);
             }
-        );
+
+
+        },{ "_id":1,"email":2});
 
     });
 
@@ -136,6 +158,19 @@ user.parseAttributes=function(req){
     return attributes;
 };
 
+// assign a function to the "methods" object of our animalSchema
+user.schema.methods.findbyId = function(cb,fields={}) {
+    console.log("Inside findbyId:"+this.id);
+    return this.model('User').findOne({ _id: this.id }, cb).select(fields);
+};
+user.schema.methods.findbyEmail = function(cb,fields={}) {
+    console.log("Inside findbyEmail:"+this.id);
+    return this.model('User').findOne({ email: this.email }, cb).select(fields);
+};
+user.schema.methods.findbyUsername = function(cb,fields={}) {
+    console.log("Inside findbyUsername:"+this.username);
+    return this.model('User').findOne({ username: this.username }, cb).select(fields);
+};
 user.create=function(req,res,attributes) {
 
 
@@ -145,33 +180,43 @@ user.create=function(req,res,attributes) {
 
         attributes['password']=hash; //Note:Bcrypt with 10 rounds is the default for Laravel Hash:make()
 
-        connection.query('INSERT INTO users SET created_at = now(),updated_at = now(), ?',attributes, function (error, results, fields) {
-            if (error) {
-                return  res.end(JSON.stringify(error,null, 3));
-            }
 
-            connection.query('SELECT * from users where id=?', results.insertId, function (error, results, fields) {
-                if (error) {
-                    return  res.end(JSON.stringify(error,null, 3));
-                }
-
-                let response={
-                    'status':1,
-                    'data':{}
-                };
+         var User = mongoose.model("User", user.schema);
+         var model = new User(attributes);
 
 
-                response['data']=results[0];
+              model.save()
+                        .then(item => {
+                        console.log("Saved");
 
-                return res.end(JSON.stringify(response,null, 3));
+                            console.log(item);
 
+                                    model = new User({"_id":item.id});
+
+                                    model.findbyId(function(err, user){
+
+                                        let response={
+                                            'status':1,
+                                            'data':user
+                                        };
+                                        return res.end(JSON.stringify(response,null, 3));
+
+                                    },{});
+
+
+                })
+                    .catch(err => {
+
+
+                          console.log("Not Saved");
+                          console.log(err);
+                          return  res.status(400).end(JSON.stringify(err,null, 3));
 
             });
 
-        });
-
 
     });
+
 
 
 
