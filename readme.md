@@ -31,17 +31,17 @@ Step2: Make a new file under config/db.js and edit Mysql Db details.
         module.exports = db;
 
 
-Step4. Install App:
+Step3. Install App:
        cd expressjs_mongodb_api
        npm install
 
 
 
-Step5. Start app
+Step4. Start app
        DEBUG=expressjs_api_with_mongodb:* npm start
 
 
-Step6: Configure the developer dashboard
+Step5: Configure the developer dashboard
        cd developers
        vim proxy.conf.json
         {
@@ -52,7 +52,7 @@ Step6: Configure the developer dashboard
           }
         }
 
-Step7: Start Developer dashboard
+Step6: Start Developer dashboard
        ng serve --port 4447  --proxy-config proxy.conf.json
 
 
