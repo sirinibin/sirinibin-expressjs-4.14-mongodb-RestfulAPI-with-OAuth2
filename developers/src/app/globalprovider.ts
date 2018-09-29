@@ -6,8 +6,8 @@ import { CookieService } from 'ngx-cookie-service';
 export class GlobalProvider {
     isGuest=true;
     username='';
-    title="Expressjs 4.15 RESTful API with OAuth2";
-    api_endpoint="http://api.nodejs.nintriva.net";
+    title="Expressjs 4.15/MongoDb RESTful API with OAuth2";
+    api_endpoint="http://api.nodejs.mongodb.nintriva.net";
 
 
     constructor(private cookieService: CookieService) {
