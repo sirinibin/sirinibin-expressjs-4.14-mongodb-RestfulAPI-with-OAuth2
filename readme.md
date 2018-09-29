@@ -52,7 +52,12 @@ Step5: Configure the developer dashboard
           }
         }
 
-Step6: Start Developer dashboard
+Step6. Install App:
+       npm install
+
+
+
+Step7: Start Developer dashboard
        ng serve --port 4447  --proxy-config proxy.conf.json
 
 
