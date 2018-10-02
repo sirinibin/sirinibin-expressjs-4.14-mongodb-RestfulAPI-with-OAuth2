@@ -19,8 +19,8 @@ service: lambda-expressjs-api-with-mongodb # NOTE: update this with your service
 
 provider:
   name: aws
-  runtime: nodejs10.1
-  #runtime: nodejs8.10
+  #runtime: nodejs10.1
+  runtime: nodejs8.10
 
 # you can overwrite defaults here
 #  stage: dev
@@ -57,7 +57,8 @@ provider:
 
 functions:
   expressjs_api_with_mongodb:
-    handler: lambda.expressjs_api_with_mongodb
+  handler: node_modules/lambda-node-runtime/lambda.expressjs_api_with_mongodb
+   # handler: lambda.expressjs_api_with_mongodb
     events:
         - http: ANY {proxy+}
         - http: ANY /
