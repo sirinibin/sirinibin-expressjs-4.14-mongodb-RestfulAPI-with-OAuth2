@@ -54,11 +54,12 @@ provider:
 #  exclude:
 #    - exclude-me.js
 #  handler: lambda.expressjs_api_with_mongodb
+#handler: node_modules/lambda-node-runtime/lambda.expressjs_api_with_mongodb
 #    - exclude-me-dir/**
 
 functions:
   expressjs_api_with_mongodb:
-    handler: node_modules/lambda-node-runtime/lambda.expressjs_api_with_mongodb
+    handler: node_modules/lambda-node-runtime/index.handler
     events:
         - http: ANY {proxy+}
         - http: ANY /
