@@ -11,7 +11,7 @@
 #
 # Happy Coding!
 
-service: expressjs_api_with_mongodb # NOTE: update this with your service name
+service: lambda-expressjs-api-with-mongodb # NOTE: update this with your service name
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
