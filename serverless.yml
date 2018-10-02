@@ -63,10 +63,6 @@ functions:
     events:
         - http: ANY {proxy+}
         - http: ANY /
-          timeout: 4 # Cold start might take up to 4 seconds.
-              environment:
-                  LAMBDA_NODE_HANDLER: index.handler # when handler method `handler` is in `index.js` module
-                  SLS_DEBUG: *
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
@@ -98,8 +94,8 @@ functions:
 #          trigger: PreSignUp
 
 #    Define function environment variables here
-#    environment:
-#      variable2: value2
+    environment:
+      LAMBDA_NODE_HANDLER: app.server
 
 # you can add CloudFormation resource templates here
 #resources:
