@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 var express = require('express');
-var sls = require('serverless-http')
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
