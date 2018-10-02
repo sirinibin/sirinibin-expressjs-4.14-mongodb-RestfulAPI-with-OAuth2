@@ -11,7 +11,7 @@
 #
 # Happy Coding!
 
-service: lambda-expressjs-api-with-mongodb # NOTE: update this with your service name
+service: expressjs-api-with-mongodb # NOTE: update this with your service name
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
@@ -19,7 +19,6 @@ service: lambda-expressjs-api-with-mongodb # NOTE: update this with your service
 
 provider:
   name: aws
-  #runtime: nodejs10.1
   runtime: nodejs8.10
 
 # you can overwrite defaults here
@@ -53,13 +52,11 @@ provider:
 #    - include-me-dir/**
 #  exclude:
 #    - exclude-me.js
-#  handler: lambda.expressjs_api_with_mongodb
-#handler: node_modules/lambda-node-runtime/lambda.expressjs_api_with_mongodb
 #    - exclude-me-dir/**
 
 functions:
   expressjs_api_with_mongodb:
-    handler: app.server
+    handler: lambda.expressjs_api_with_mongodb
     events:
         - http: ANY {proxy+}
         - http: ANY /
@@ -95,7 +92,7 @@ functions:
 
 #    Define function environment variables here
     environment:
-      LAMBDA_NODE_HANDLER: app.server
+      LAMBDA_NODE_HANDLER: lambda.expressjs_api_with_mongodb
 
 # you can add CloudFormation resource templates here
 #resources:
