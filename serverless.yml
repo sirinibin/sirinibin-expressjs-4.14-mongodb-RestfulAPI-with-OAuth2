@@ -55,29 +55,18 @@ provider:
 #    - exclude-me.js
 #  handler: lambda.expressjs_api_with_mongodb
 #handler: node_modules/lambda-node-runtime/lambda.expressjs_api_with_mongodb
-# handler: node_modules/lambda-node-runtime/index.handler
 #    - exclude-me-dir/**
 
 functions:
   expressjs_api_with_mongodb:
-    handler: app.server # reference the file and exported method
-        events:
-          - http:
-              path: /
-              method: ANY
-              cors: true
-          - http:
-              path: /{proxy+}
-              method: ANY
-              cors: true
-
-        #- http: ANY {proxy+}
-        #- http: ANY /
-    timeout: 4
-    # Cold start might take up to 4 seconds.
-environment:
-            LAMBDA_NODE_HANDLER: index.handler
-            # when handler method `handler` is in `index.js` module
+    handler: app.server
+    events:
+        - http: ANY {proxy+}
+        - http: ANY /
+          timeout: 4 # Cold start might take up to 4 seconds.
+              environment:
+                  LAMBDA_NODE_HANDLER: index.handler # when handler method `handler` is in `index.js` module
+                  SLS_DEBUG: *
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
