@@ -16,6 +16,14 @@ Login: developer/developer
 ```
 
 
+
+[ENDPOINT]
+-------------------
+```
+AWS LAMBDA: https://991fr47l2i.execute-api.us-east-1.amazonaws.com/dev
+SERVER: http://api.nodejs.mongodb.nintriva.net
+```
+
 INSTALLATION
 -------------------
 ```
