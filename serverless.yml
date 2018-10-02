@@ -55,14 +55,26 @@ provider:
 #    - exclude-me.js
 #  handler: lambda.expressjs_api_with_mongodb
 #handler: node_modules/lambda-node-runtime/lambda.expressjs_api_with_mongodb
+# handler: node_modules/lambda-node-runtime/index.handler
 #    - exclude-me-dir/**
 
 functions:
   expressjs_api_with_mongodb:
-    handler: node_modules/lambda-node-runtime/index.handler
+     handler: app.server
     events:
-        - http: ANY {proxy+}
-        - http: ANY /
+        - http:
+                    # this is an API Gateway HTTP event trigger
+                  path: /
+                  method: ANY
+                  cors: true
+              - http:
+                   # all routes get proxied to the Express router
+                  path: /{proxy+}
+                  method: ANY
+                  cors: true
+
+        #- http: ANY {proxy+}
+        #- http: ANY /
     timeout: 4
     # Cold start might take up to 4 seconds.
 environment:
