@@ -19,7 +19,8 @@ service: lambda-expressjs-api-with-mongodb # NOTE: update this with your service
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs10.1
+  #runtime: nodejs8.10
 
 # you can overwrite defaults here
 #  stage: dev
