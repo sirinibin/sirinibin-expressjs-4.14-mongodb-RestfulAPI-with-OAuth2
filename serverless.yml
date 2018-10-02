@@ -57,8 +57,8 @@ provider:
 
 functions:
   expressjs_api_with_mongodb:
-  handler: node_modules/lambda-node-runtime/lambda.expressjs_api_with_mongodb
-   # handler: lambda.expressjs_api_with_mongodb
+  #handler: node_modules/lambda-node-runtime/lambda.expressjs_api_with_mongodb
+  handler: lambda.expressjs_api_with_mongodb
     events:
         - http: ANY {proxy+}
         - http: ANY /
