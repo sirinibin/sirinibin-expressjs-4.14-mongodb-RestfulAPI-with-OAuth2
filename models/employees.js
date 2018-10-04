@@ -364,21 +364,25 @@ employees.findAll=function(req,res) {
 
     order={};
 
-    sort_string=req.query.sort;
-    sort_string=sort_string.split(",");
+    if(req.query.sort){
+
+        sort_string=req.query.sort;
+        sort_string=sort_string.split(",");
 
 
-    for(i=0;i< sort_string.length;i++){
+            for(i=0;i< sort_string.length;i++){
 
-            if(sort_string[i].match("desc")){
-                str=sort_string[i].replace("desc","").trim();
-                order[str]=-1;
-            }else {
-                str=sort_string[i].replace("asc","").trim();
-                order[str]=1;
+                    if(sort_string[i].match("desc")){
+                        str=sort_string[i].replace("desc","").trim();
+                        order[str]=-1;
+                    }else {
+                        str=sort_string[i].replace("asc","").trim();
+                        order[str]=1;
+                    }
+
             }
-
     }
+    
 
 
 
