@@ -177,7 +177,7 @@ employees.create=function(req,res) {
 employees.update=function(req,res) {
 
     if(req.params.id){
-        params2=employees.parseAttributes(req);
+        params=employees.parseAttributes(req);
 
 
         var Employee = mongoose.model("Employee", employees.schema);
@@ -225,7 +225,7 @@ employees.update=function(req,res) {
                 });
 
 
-            },params2);
+            },params);
 
         },{ "_id":1});
 
@@ -329,7 +329,7 @@ employees.find=function(req,res,id) {
 employees.findAll=function(req,res) {
 
     let offset=0;
-    let limit=2;
+    let limit=10;
     let page=1;
     let search_condition='';
 
