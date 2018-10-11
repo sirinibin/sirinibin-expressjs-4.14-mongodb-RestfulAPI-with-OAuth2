@@ -2,7 +2,7 @@ const { check }  = require('express-validator/check');
 
 var user = require('./user');
 
-
+var accesstoken = require('./accesstoken');
 var me={};
 
 
@@ -52,4 +52,5 @@ me.getInfo=function(req,res,user_id) {
 
 
 }
+
 module.exports = me;

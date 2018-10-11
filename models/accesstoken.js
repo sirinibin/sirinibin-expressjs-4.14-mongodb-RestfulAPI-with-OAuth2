@@ -69,6 +69,10 @@ accesstoken.schema.methods.findbyToken = function(cb,fields={}) {
     console.log("Inside findbyToken:"+this.token);
     return this.model('AccessToken').findOne({ token: this.token,expires_at:{'$gt':new Date()} }, cb).select(fields);
 };
+accesstoken.schema.methods.deletebyToken = function(cb,data={}) {
+    console.log("Inside DeletebByToken:"+this.token);
+    return this.model('AccessToken').remove({ token: this.token }, cb);
+};
 
 accesstoken.generateAccessToken=function(req,res,attributes) {
     //var d = new Date();
@@ -151,4 +155,37 @@ accesstoken.generateAccessToken=function(req,res,attributes) {
 
 
 }
+
+accesstoken.delete=function(req,res) {
+
+    console.log("Inside Delete function");
+
+    if(req.query.access_token){
+
+        console.log("Inside Delete function");
+        var AccessToken = mongoose.model("AccessToken", accesstoken.schema);
+        AccessTokenModel = new AccessToken({"token":req.query.access_token});
+
+        AccessTokenModel.deletebyToken(function(err, result){
+
+            console.log(result);
+                if (result) {
+
+                    let response={
+                        'status':1,
+                        'message':'Deleted Successfully',
+                        'data':{
+                            'token':req.query.access_token
+                        }
+                    };
+
+                    return res.end(JSON.stringify(response,null, 3));
+
+                }
+
+        });
+    }
+
+}
+
 module.exports = accesstoken;
